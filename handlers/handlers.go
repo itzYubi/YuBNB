@@ -44,3 +44,23 @@ func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
 		StringMap: stringMap,
 	})
 }
+
+func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "make-reservation.page.tmpl", &models.TemplateData{})
+}
+
+func (m *Repository) NatsuHome(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "natsu.page.tmpl", &models.TemplateData{})
+}
+
+func (m *Repository) YukiHome(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "yuki.page.tmpl", &models.TemplateData{})
+}
+
+func (m *Repository) SearchAvailability(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "search-availability.page.tmpl", &models.TemplateData{})
+}
+
+func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "contact.page.tmpl", &models.TemplateData{})
+}
