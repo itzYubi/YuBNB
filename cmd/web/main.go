@@ -1,13 +1,18 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
-	"github.com/itzYubi/bookings/config"
-	"github.com/itzYubi/bookings/handlers"
-	"github.com/itzYubi/bookings/render"
 	"log"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/itzYubi/bookings/internal/config"
+	"github.com/itzYubi/bookings/internal/handlers"
+	"github.com/itzYubi/bookings/internal/helpers"
+	"github.com/itzYubi/bookings/internal/models"
+	"github.com/itzYubi/bookings/internal/render"
 
 	"github.com/alexedwards/scs/v2"
 )
@@ -16,11 +21,40 @@ const webPort = ":7070"
 
 var app config.AppConfig
 var session *scs.SessionManager
+var infoLog *log.Logger
+var errorLog *log.Logger
 
 // main is the main function
 func main() {
+
+	err := run()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Staring application on port %s", webPort)
+
+	srv := &http.Server{
+		Addr:    webPort,
+		Handler: routes(&app),
+	}
+
+	err = srv.ListenAndServe()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
+	gob.Register(models.Reservation{})
 	// change this to true when in production
 	app.InProduction = false
+
+	infoLog = log.New(os.Stdout, "\nINFO\t", log.Ldate|log.Ltime)
+	app.InfoLog = infoLog
+
+	errorLog = log.New(os.Stdout, "\nERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	app.ErrorLog = errorLog
 
 	// set up the session
 	session = scs.New()
@@ -34,6 +68,7 @@ func main() {
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("cannot create template cache")
+		return err
 	}
 
 	app.TemplateCache = tc
@@ -43,16 +78,7 @@ func main() {
 	handlers.NewHandlers(repo)
 
 	render.NewTemplates(&app)
+	helpers.NewHelpers(&app)
 
-	fmt.Printf("Staring application on port %s", webPort)
-
-	srv := &http.Server{
-		Addr:    webPort,
-		Handler: routes(&app),
-	}
-
-	err = srv.ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
-	}
+	return nil
 }
