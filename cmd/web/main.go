@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/itzYubi/bookings/internal/config"
+	"github.com/itzYubi/bookings/internal/driver"
 	"github.com/itzYubi/bookings/internal/handlers"
 	"github.com/itzYubi/bookings/internal/helpers"
 	"github.com/itzYubi/bookings/internal/models"
@@ -27,10 +28,12 @@ var errorLog *log.Logger
 // main is the main function
 func main() {
 
-	err := run()
+	db, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	defer db.SQL.Close()
 
 	fmt.Printf("Staring application on port %s", webPort)
 
@@ -45,8 +48,15 @@ func main() {
 	}
 }
 
-func run() error {
+func run() (*driver.DB, error) {
+
+	//things to put in the session
 	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
+	gob.Register(models.RoomRestriction{})
+
 	// change this to true when in production
 	app.InProduction = false
 
@@ -65,20 +75,30 @@ func run() error {
 
 	app.Session = session
 
+	//connect to DB
+	log.Println("Connecting to Database.....")
+	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=postgres password=root")
+	if err != nil {
+		log.Fatal("Cannot connect to Database! Dying...")
+	}
+
+	log.Println("CONNECTED TO DATABASE!")
+	//------------------------------------------------------------------------
+
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("cannot create template cache")
-		return err
+		return nil, err
 	}
 
 	app.TemplateCache = tc
 	app.UseCache = false
 
-	repo := handlers.NewRepo(&app)
+	repo := handlers.NewRepo(&app, db)
 	handlers.NewHandlers(repo)
 
-	render.NewTemplates(&app)
+	render.NewRenderer(&app)
 	helpers.NewHelpers(&app)
 
-	return nil
+	return db, nil
 }
