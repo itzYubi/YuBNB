@@ -37,6 +37,7 @@ require (
 	github.com/gobuffalo/validate/v3 v3.3.3 // indirect
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gorilla/css v1.0.0 // indirect
+	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.13.0 // indirect

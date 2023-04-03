@@ -30,7 +30,7 @@ func main() {
 
 	db, err := run()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	defer db.SQL.Close()
@@ -87,7 +87,7 @@ func run() (*driver.DB, error) {
 
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
-		log.Fatal("cannot create template cache")
+		log.Fatal("cannot create template cache due to " + err.Error())
 		return nil, err
 	}
 
