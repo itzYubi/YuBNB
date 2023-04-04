@@ -34,31 +34,13 @@
 
 {{end}}
 
+<script src="/static/js/roomsCommon.js"></script>
+
 {{define "js"}}
     <script>
+      var csrftoken = '{{.CSRFToken}}';
         document.getElementById("check-availability-button").addEventListener("click", function(){
-          let html = `
-          <form id="check-availability-form" action="" method ="post" novalidate class="needs-validation">
-              <div class="form-row">
-                  <div class="col">
-                      <div class="row" id="reservation-dates-modal">
-                          <div class="col">
-                              <input disabled required class="form-control" type="text" id="start" placeholder="Arrival" name="start">
-                          </div>
-                    
-                          <div class="col">
-                              <input disabled required class="form-control" type="text" id="end" placeholder="Departure" name="end">
-                          </div> 
-                      </div>
-                  </div>
-              </div>
-          </form>
-          `;
-          
-          attention.custom({
-            msg:html, 
-            title:"Choose your dates",
-          })
+          let attention = RoomCheckAvailabilityPrompt("2", csrftoken)
       })
     </script>
 {{end}}
