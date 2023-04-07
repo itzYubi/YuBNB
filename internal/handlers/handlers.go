@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -154,6 +155,57 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		m.App.Session.Put(r.Context(), "error", "Can't insert restriction into DB!")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	}
+
+	//send mails
+	dateFormat := "2006-01-02"
+	htmlGuestMessage := fmt.Sprintf(`
+		<strong>Reservation Confirmation</strong><br>
+		Dear %s:, <br>
+		This is to confirm your reservartion at WeebzHome Bookings, with the following details:<br>
+		Home name: %s,<br>
+		Arrival: %s,<br>
+		Departure: %s,<br>
+		<br>
+		Thanks & regards,<br>
+		Yubi,<br>
+		(WeebZ admin)
+	`, reservation.FirstName, reservation.Room.RoomName, reservation.StartDate.Format(dateFormat), reservation.EndDate.Format(dateFormat))
+
+	htmlOwnerMessage := fmt.Sprintf(`
+		<strong>Reservation Notification</strong><br>
+		Dear owner:, <br>
+		This is to notify that you have a reservartion from WeebzHome Bookings, with the following details:<br>
+		Home name: %s,<br>
+		Arrival: %s,<br>
+		Departure: %s,<br>
+		<br>
+		Thanks & regards,<br>
+		Yubi,<br>
+		(WeebZ admin)
+	`, reservation.Room.RoomName, reservation.StartDate.Format(dateFormat), reservation.EndDate.Format(dateFormat))
+
+	//send notifications - first to guest
+	msg := models.MailData{
+		To:       reservation.Email,
+		From:     "bookingsAdmin@Weebz.com",
+		Subject:  "Reservation Confirmation for: " + reservation.FirstName + " " + reservation.LastName,
+		Content:  htmlGuestMessage,
+		Template: "basic.html",
+	}
+
+	m.App.MailChan <- msg
+
+	//send notifications - second to owner
+
+	msg = models.MailData{
+		To:       "roomOwner@world.com",
+		From:     "bookingsAdmin@Weebz.com",
+		Subject:  "Reservation Notification for: " + reservation.Room.RoomName,
+		Content:  htmlOwnerMessage,
+		Template: "basic.html",
+	}
+
+	m.App.MailChan <- msg
 
 	m.App.Session.Put(r.Context(), "reservation", reservation)
 
