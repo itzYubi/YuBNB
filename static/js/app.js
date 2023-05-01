@@ -13,7 +13,7 @@ function Prompt() {
           position: position,
           icon: icon,
           showConfirmButton: false,
-          timer: 3000,
+          timer: 6000,
           timerProgressBar: true,
           didOpen: (toast) => {
             toast.addEventListener('mouseenter', Swal.stopTimer)

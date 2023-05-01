@@ -328,11 +328,6 @@ func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 	w.Write(out)
 }
 
-// Contact renders the contact page.
-func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
-	render.Template(w, r, "contact.page.tmpl", &models.TemplateData{})
-}
-
 // displays the reservation summary
 func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
@@ -414,4 +409,74 @@ func (m *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 	m.App.Session.Put(r.Context(), "reservation", res)
 
 	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
+}
+
+// Contact renders the contact page.
+func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
+	var contactData models.ContactData
+	data := make(map[string]interface{})
+	data["contact"] = contactData
+
+	render.Template(w, r, "contact.page.tmpl", &models.TemplateData{
+		Data: data,
+		Form: forms.New(nil),
+	})
+}
+
+func (m *Repository) PostSubmitContact(w http.ResponseWriter, r *http.Request) {
+	var contactData models.ContactData
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		m.App.Session.Put(r.Context(), "error", "Cannot parse form")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	}
+
+	contactData.Name = r.Form.Get("name")
+	contactData.Email = r.Form.Get("email")
+	contactData.Subject = r.Form.Get("subject")
+	contactData.Message = r.Form.Get("message")
+
+	form := forms.New(r.PostForm)
+
+	form.Required("name", "email", "subject", "message")
+	form.MinLength("name", 5)
+	form.MinLength("message", 10)
+	form.IsEmail("email")
+
+	if !form.IsValid() {
+		data := make(map[string]interface{})
+		data["contact"] = contactData
+		err := render.Template(w, r, "contact.page.tmpl", &models.TemplateData{
+			Form: form,
+			Data: data,
+		})
+		log.Println(err)
+		return
+	}
+
+	htmlSupportMessage := fmt.Sprintf(`
+		<strong>Help Request</strong><br>
+		Dear Support Team, <br>
+		This is support request by customer, with the following details:<br>
+		Name: %s,<br>
+		Email: %s,<br>
+		Support Message: %s,<br>
+		<br>
+		Thanks,<br>
+		(WeebZ admin)
+	`, contactData.Name, contactData.Email, contactData.Message)
+
+	msg := models.MailData{
+		To:       "support.weebz@gmail.com",
+		From:     "contact.weebz@gmail.com",
+		Subject:  contactData.Subject,
+		Content:  htmlSupportMessage,
+		Template: "basic.html",
+	}
+
+	m.App.MailChan <- msg
+	m.App.Session.Put(r.Context(), "flash", "We have received your contact request!")
+
+	http.Redirect(w, r, "/contact", http.StatusSeeOther)
 }

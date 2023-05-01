@@ -70,3 +70,10 @@ type MailData struct {
 	Content  string
 	Template string
 }
+
+type ContactData struct{
+	Name string
+	Email string
+	Subject string
+	Message string
+}
