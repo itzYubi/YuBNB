@@ -42,7 +42,7 @@ func main() {
 	log.Println("Staring mail listener...")
 	listenForMail()
 
-	log.Println("Staring application on port %s", webPort)
+	log.Printf("Staring application on port %s \n", webPort)
 
 	srv := &http.Server{
 		Addr:    webPort,
