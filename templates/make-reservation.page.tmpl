@@ -12,8 +12,8 @@
             <p><strong>Reservation Details</strong><br>
             
             Room: {{$res.Room.RoomName}}<br>
-            Arrival: {{index .StringMap "start_date"}}<br>
-            Departure: {{index .StringMap "end_date"}}<br>
+            Arrival: {{humanDate $res.StartDate}}<br>
+            Departure: {{humanDate $res.EndDate}}<br>
             Duration: {{index .StringMap "duration"}}<br>
             </p>
 

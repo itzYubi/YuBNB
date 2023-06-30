@@ -1,0 +1,67 @@
+{{template "admin" .}}
+
+{{define "css"}}
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
+    <style>
+        #all-reservations .res-img {
+            width: 25px;
+            height: 25px;
+        }
+    </style>
+{{end}}
+
+{{define "page-title"}}
+    All reservations
+{{end}}
+
+{{define "content"}}
+    <div class="col-md-12">
+        {{$res := index .Data "reservations"}}
+        
+        <table class="table table-striped table-hover" id="all-reservations">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Room</th>
+                    <th>Arrival</th>
+                    <th>Departure</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range $res}}
+                    <tr>
+                        <td>{{.ID}}</td>
+                        <td>{{.FirstName}}</td>
+                        <td>{{.LastName}}</td>
+                        <td>{{.Room.RoomName}}</td>
+                        <td>{{humanDate .StartDate}}</td>
+                        <td>{{humanDate .EndDate}}</td>
+                        <td>
+                            <a href="/admin/reservations/all/{{.ID}}/show">
+                                <img class="res-img" src="/static/images/resLink.png">
+                            </a>  
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+{{end}}
+
+
+
+{{define "js"}}
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const dataTable = new simpleDatatables.DataTable("#all-reservations", {
+                select: 3, 
+                sort: "desc",
+            })
+        })
+    </script>
+
+{{end}}

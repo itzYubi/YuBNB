@@ -28,7 +28,7 @@ func New(data url.Values) *Form {
 	}
 }
 
-// verifies if form has field filled
+// Has verifies if form has field filled
 func (f *Form) Has(field string) bool {
 	x := f.Get(field)
 	return x != ""
@@ -44,12 +44,12 @@ func (f *Form) Required(fields ...string) {
 	}
 }
 
-// valid returns true if there are no errors in the form
+// IsValid returns true if there are no errors in the form
 func (f *Form) IsValid() bool {
 	return len(f.Errors) == 0
 }
 
-// checks for min length of string
+// MinLength checks for min length of string
 func (f *Form) MinLength(field string, length int) bool {
 	currVal := f.Get(field)
 	if len(currVal) < length {
@@ -59,7 +59,7 @@ func (f *Form) MinLength(field string, length int) bool {
 	return true
 }
 
-// checks if entered email is correct
+// IsEmail checks if entered email is correct
 func (f *Form) IsEmail(field string) {
 	if !govalidator.IsEmail(f.Get(field)) {
 		f.Errors.Add(field, "Invalid Email address")

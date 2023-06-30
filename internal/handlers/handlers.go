@@ -105,12 +105,14 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		m.App.Session.Put(r.Context(), "error", "Can't get reservation from session!")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
 		m.App.Session.Put(r.Context(), "error", "Cannot parse form")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
 	}
 
 	reservation.FirstName = r.Form.Get("first_name")
@@ -118,7 +120,13 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	reservation.Phone = r.Form.Get("phone")
 	reservation.Email = r.Form.Get("email")
 
+	duration := (reservation.EndDate).Sub(reservation.StartDate)
+	durStr, _ := durafmt.ParseString(duration.String())
+
 	form := forms.New(r.PostForm)
+
+	stringMap := make(map[string]string)
+	stringMap["duration"] = durStr.String()
 
 	form.Required("first_name", "last_name", "email")
 	form.MinLength("first_name", 3)
@@ -129,8 +137,9 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		data["reservation"] = reservation
 
 		render.Template(w, r, "make-reservation.page.tmpl", &models.TemplateData{
-			Form: form,
-			Data: data,
+			Form:      form,
+			Data:      data,
+			StringMap: stringMap,
 		})
 		return
 	}
@@ -447,11 +456,10 @@ func (m *Repository) PostSubmitContact(w http.ResponseWriter, r *http.Request) {
 	if !form.IsValid() {
 		data := make(map[string]interface{})
 		data["contact"] = contactData
-		err := render.Template(w, r, "contact.page.tmpl", &models.TemplateData{
+		render.Template(w, r, "contact.page.tmpl", &models.TemplateData{
 			Form: form,
 			Data: data,
 		})
-		log.Println(err)
 		return
 	}
 
@@ -479,4 +487,51 @@ func (m *Repository) PostSubmitContact(w http.ResponseWriter, r *http.Request) {
 	m.App.Session.Put(r.Context(), "flash", "We have received your contact request!")
 
 	http.Redirect(w, r, "/contact", http.StatusSeeOther)
+}
+
+func (m *Repository) Login(w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "login.page.tmpl", &models.TemplateData{
+		Form: forms.New(nil),
+	})
+}
+
+func (m *Repository) PostLogin(w http.ResponseWriter, r *http.Request) {
+	_ = m.App.Session.RenewToken(r.Context())
+
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+	}
+	email := r.Form.Get("email")
+	password := r.Form.Get("password")
+
+	form := forms.New(r.PostForm)
+	form.Required("email", "password")
+	form.IsEmail("email")
+	if !form.IsValid() {
+		render.Template(w, r, "login.page.tmpl", &models.TemplateData{
+			Form: form,
+		})
+		return
+	}
+
+	id, _, err := m.DB.Authenticate(email, password)
+	if err != nil {
+		log.Println(err)
+		m.App.Session.Put(r.Context(), "error", "Invalid login credentials")
+		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+		return
+	}
+
+	m.App.Session.Put(r.Context(), "user_id", id)
+	m.App.Session.Put(r.Context(), "flash", "Logged in successfully")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// Logout logs a user out
+func (m *Repository) Logout(w http.ResponseWriter, r *http.Request) {
+	_ = m.App.Session.Destroy(r.Context())
+	_ = m.App.Session.RenewToken(r.Context())
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

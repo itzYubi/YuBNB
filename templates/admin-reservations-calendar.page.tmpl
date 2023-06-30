@@ -1,0 +1,123 @@
+{{template "admin" .}}
+
+{{define "page-title"}}
+    Reservation Calendar
+{{end}}
+
+{{define "css"}}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <style>
+        .input[type="checkbox"] {
+            visibility: hidden;
+        }   
+
+        .custom-checkbox input[type="checkbox"] {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .custom-checkbox input[type="checkbox"]:checked{
+            accent-color: orange;
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+    </style>
+{{end}}
+
+{{define "content"}}
+    {{$rooms := index .Data "rooms"}}
+    {{$dim := index .IntMap "days_in_month"}}
+    {{$currMonth := index .StringMap "this_month"}}
+    {{$currYear := index .StringMap "this_month_year"}}
+
+    <div class="col-md-12">
+        
+        <div class="text-center">
+            <h3>{{index .StringMap "this_month_name"}}, {{index .StringMap "this_month_year"}}</h3>
+        </div>
+
+        <div class="float-start">
+            <a class="btn btn-outline-secondary"
+                href="/admin/reservations-calendar?y={{index .StringMap "last_month_year"}}&m={{index .StringMap "last_month"}}">
+                &lt;&lt;
+            </a>
+        </div>
+
+        <div class="float-end">
+            <a class="btn btn-outline-secondary"
+                href="/admin/reservations-calendar?y={{index .StringMap "next_month_year"}}&m={{index .StringMap "next_month"}}">
+                &gt;&gt;
+            </a>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <form method="post" action="/admin/reservations-calendar">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="hidden" name="y" value="{{$currYear}}">
+            <input type="hidden" name="m" value="{{$currMonth}}">
+
+            {{range $rooms}}
+                {{$roomID := .ID}}
+                {{$blocks := index $.Data (printf "block_map_%d" .ID)}}
+                {{$reservations := index $.Data (printf "reservation_map_%d" .ID)}}
+                <br>
+
+                <h4>{{.RoomName}}</h4>
+
+                <div class="table-response">
+                    <table class="table table-bordered table-sm">
+
+                        <tr class="table-primary">
+                            {{range $index := iterate $dim}}
+                                <td class="text-center">
+                                    {{$index}}
+                                </td>
+                            {{end}}
+                        </tr>
+
+                        <tr>
+                            {{range $index := iterate $dim}}
+                                <td class="text-center">
+                                    {{if gt (index $reservations (printf "%s-%s-%d" $currYear $currMonth $index)) 0}}
+                                        <a href="/admin/reservations/cal/{{index $reservations (printf "%s-%s-%d" $currYear $currMonth $index)}}/show?y={{$currYear}}&m={{$currMonth}}">
+                                            <span class="text-danger" style="font-weight: bold; font-size: 18px; ">R</span>
+                                        </a>
+                                    {{else}}
+                                        <div class="custom-checkbox">
+                                            <input type="checkbox"
+                                                {{if gt (index $blocks (printf "%s-%s-%d" $currYear $currMonth $index)) 0}}
+                                                    checked
+                                                    name="remove_block_{{$roomID}}_{{printf "%s-%s-%d" $currYear $currMonth $index}}"
+                                                    value="{{index $blocks (printf "%s-%s-%d" $currYear $currMonth $index)}}"
+                                                {{else}}
+                                                    name="add_block_{{$roomID}}_{{printf "%s-%s-%d" $currYear $currMonth $index}}"
+                                                    value="0"
+                                                {{end}}
+                                            >
+                                            <label></label>
+                                        </div>
+                                    {{end}}
+                                </td>
+                            {{end}}
+                        </tr>
+                    </table>
+                </div>
+            {{end}}
+
+            <br>
+            <br>
+            <div class="row justify-content-center">
+                <div class="form-group text-center">
+                    <input type="submit" class="btn btn-primary" value="Save Changes">
+                </div>
+            </div>
+  
+        </form>
+    </div>
+{{end}}

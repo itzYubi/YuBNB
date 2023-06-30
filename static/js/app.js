@@ -69,23 +69,16 @@ async function custom(c) {
         showCancelButton: true,
         showConfirmButton: showConfirmButton,
         willOpen: () => {
-            if (c.willOpen !== undefined) {
-                c.willOpen();
-            }
-        },
-        
-        preConfirm: () => {
-          return [
-            document.getElementById("start").value,
-            document.getElementById("end").value
-          ]
+          if (c.willOpen !== undefined) {
+            c.willOpen();
+          }
         },
 
         didOpen: () => {
           if (c.didOpen !== undefined) {
-                c.didOpen();
-            }
+            c.didOpen();
           }
+        }
   })
 
   if (result) {
